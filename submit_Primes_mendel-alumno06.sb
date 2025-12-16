@@ -1,0 +1,45 @@
+#!/bin/bash
+#SBATCH -p hpc-bio-mendel
+#SBATCH -N 1                 # 1 Nodo
+#SBATCH -n 8                 # Reservar 8 cores
+#SBATCH --output=primes_%j.log
+#SBATCH --chdir=/home/alumno06/lab-py-advan
+
+# Cargar el entorno de Python
+module load anaconda/2025.06
+
+echo "=========================================="
+echo "Iniciando trabajo SLURM: $SLURM_JOB_ID"
+echo "=========================================="
+
+# 1. CONVERSIÓN: Notebook -> Script Python (.py)
+# Esto asegura que ejecutas lo último que hayas guardado en el notebook
+echo "Convirtiendo notebook a script python..."
+jupyter nbconvert --to python primes-par-alumno06.ipynb
+
+# 2. BUCLE DE PRUEBAS
+# Probamos con dos tamaños de problema: 1 millón y 10 millones
+for N in 1000000 10000000; do
+    echo " "
+    echo "#############################################"
+    echo "    EJECUTANDO PARA TAMAÑO N = $N"
+    echo "#############################################"
+    
+    # Probamos con distinto número de hilos: 1, 2, 4 y 8
+    for CORES in 1 2 4 8; do
+        echo " "
+        echo ">>> Configurando entorno para $CORES núcleos <<<"
+        
+        # Esta variable controla los hilos de Numba
+        # Y nuestro código Python la leerá para configurar Multiprocessing
+        export OMP_NUM_THREADS=$CORES
+        
+        # Ejecutamos el script .py generado, pasando N como argumento
+        ipython primes-par-alumno06.py $N
+    done
+done
+
+echo "Trabajo finalizado."
+
+
+module unload anaconda/2025.06
