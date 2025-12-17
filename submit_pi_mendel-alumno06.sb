@@ -1,0 +1,26 @@
+#!/bin/bash
+#SBATCH -p hpc-bio-mendel
+#SBATCH -N 1
+#SBATCH -n 8
+#SBATCH --chdir=/home/alumno06/lab-py-advan
+#SBATCH --output=pi_hybrid_%j.log
+
+module load anaconda/2025.06
+
+# Convertir notebook
+jupyter nbconvert --to python pi-par-solution-alumno06.ipynb
+
+# Probamos con 100 Millones de intentos
+TRIALS=100000000
+
+echo "############################################################"
+echo "    TEST HÍBRIDO (MP + NUMBA) - $TRIALS INTENTOS"
+echo "############################################################"
+
+# Variamos los núcleos
+for CORES in 1 4 8; do
+    echo " "
+    echo ">>> CORES: $CORES <<<"
+    export OMP_NUM_THREADS=$CORES
+    ipython pi-par-solution-alumno06.py $TRIALS
+done
