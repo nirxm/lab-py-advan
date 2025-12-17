@@ -1,0 +1,37 @@
+#!/bin/bash
+#SBATCH -p hpc-bio-mendel
+#SBATCH -N 1
+#SBATCH -n 8
+#SBATCH --chdir=/home/alumno06/lab-py-advan
+#SBATCH --output=reduc_entregable_%j.log
+
+module load anaconda/2025.06
+
+# 1. Convertimos el notebook a python
+echo "Convirtiendo notebook..."
+jupyter nbconvert --to python reduc-operation-array-par-alumno06.ipynb
+
+# 2. BUCLE DE TAMAÑOS
+# Añadimos 50000000 (50 Millones) para que se ejecute la parte "Sin Optimizar".
+# Luego 10^8 y 10^9 como pide la guía.
+for SIZE in 50000000 100000000 1000000000; do
+    echo " "
+    echo "=============================================================="
+    echo "    INICIANDO BATERÍA PARA TAMAÑO: $SIZE"
+    echo "=============================================================="
+    
+    # Bucle de Núcleos (Para Numba y escalabilidad)
+    for CORES in 1 2 4 8; do
+        echo " "
+        echo ">>> Configuración SLURM: $CORES Hilos <<<"
+        
+        export OMP_NUM_THREADS=$CORES
+        
+        # Ejecutamos el script Python.
+        # Si SIZE es 50 millones, se ejecutará TODO (incluido Python lento).
+        # Si SIZE es mayor, se saltará la parte lenta automáticamente.
+        ipython reduc-operation-array-par-alumno06.py $SIZE
+    done
+done
+
+echo "Trabajo finalizado."
